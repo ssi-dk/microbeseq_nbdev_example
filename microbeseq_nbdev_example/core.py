@@ -2,7 +2,7 @@
 
 # %% auto 0
 __all__ = ['PACKAGE_NAME', 'DEV_MODE', 'PACKAGE_DIR', 'PROJECT_DIR', 'config', 'set_env_variables', 'get_config',
-           'show_project_env_vars', 'hello_world', 'cli']
+           'show_project_env_vars', 'get_samplesheet', 'hello_world', 'cli']
 
 # %% ../nbs/00_core.ipynb 4
 # Need the microbeseq_nbdev_example for a few functions, this can be considered a static var
@@ -130,11 +130,82 @@ def show_project_env_vars(config: dict) -> None:
         if k.startswith(config["CORE_PROJECT_VARIABLE_PREFIX"]):
             print(f"{k}={v}")
 
-# %% ../nbs/00_core.ipynb 22
+# %% ../nbs/00_core.ipynb 21
+import pandas as pd
+
+
+def get_samplesheet(sample_sheet_config: dict) -> pd.DataFrame:
+    # Load the sample sheet into a pandas dataframe
+    # If columns is not None then it will only load those columns
+    # If the sample sheet is a csv then it will load it as a csv, otherwise it will assume it's a tsv
+
+    # Expected sample_sheet_config:
+    # sample_sheet:
+    #   path: path/to/sample_sheet.tsv
+    #   delimiter: '\t' # Optional, will assume , for csv and \t otherwises
+    #   header: 0 # Optional, 0 indicates first row is header, None indicates no header
+    #   columns: ['column1', 'column2', 'column3'] # Optional, if not provided all columns will be used
+
+    # Example sample sheet:
+    # #sample_id	file_path	metadata1	metadata2
+    # Sample1	/path/to/sample1.fasta	value1	option1
+    # Sample2	/path/to/sample2.fasta	value2	option2
+    # Sample3	/path/to/sample3.fasta	value3	option1
+    # Sample4	/path/to/sample4.fasta	value1	option2
+    # Sample5	/path/to/sample5.fasta	value2	option1
+
+    # This function should also handle ensuring the sample sheet is in the correct format, such as ensuring the columns are correct and that the sample names are unique.
+    if not os.path.isfile(sample_sheet_config["path"]):
+        raise FileNotFoundError(f"File {sample_sheet_config['path']} does not exist")
+    if "delimiter" in sample_sheet_config:
+        delimiter = sample_sheet_config["delimiter"]
+    else:
+        # do a best guess based on file extension
+        delimiter = "," if sample_sheet_config["path"].endswith(".csv") else "\t"
+    header = 0
+    # if "header" in sample_sheet_config:
+    #     header = sample_sheet_config["header"]
+    # else:
+    #     # check if the first line starts with a #, if so lets assume it's a header otherwise assume there isn't one
+    #     with open(sample_sheet_config["path"], "r") as f:
+    #         first_line = f.readline()
+    #         header = 0 if first_line.startswith("#") else None
+    if "columns" in sample_sheet_config:
+        columns = sample_sheet_config[
+            "columns"
+        ]  # note the # for the first item needs to be stripped to compare to the columns
+    else:
+        columns = None  # implies all columns
+    try:
+        # note when we have a header the first column may begin with a #, so we need to remove it
+        df = pd.read_csv(
+            sample_sheet_config["path"],
+            delimiter=delimiter,
+            header=header,
+            comment=None,
+        )
+    except Exception as e:
+        print(
+            "Error: Could not load sample sheet into dataframe, you have a problem with your sample sheet or the configuration."
+        )
+        raise e
+
+    # Check the first header has a # in it, if so remove it for only that item
+    if df.columns[0].startswith("#"):
+        df.columns = [col.lstrip("#") for col in df.columns]
+    # Ensure the sample sheet has the correct columns
+    if columns is not None and not all([col in df.columns for col in columns]):
+        raise ValueError("Error: Sample sheet does not have the correct columns")
+
+    # Clean the df of any extra rows that can be caused by empty lines in the sample sheet
+    df = df.dropna(how="all")
+    return df
+
+# %% ../nbs/00_core.ipynb 23
 def hello_world(name: str = "Not given") -> str:
     return f"Hello World! My name is {name}"
 
-# %% ../nbs/00_core.ipynb 26
+# %% ../nbs/00_core.ipynb 27
 from fastcore.script import call_parse
 
 
