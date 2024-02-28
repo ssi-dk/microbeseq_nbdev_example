@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "microbeseq_nbdev_example"
+  site-url: "https://$GIT_USER_NAME.github.io/microbeseq_nbdev_example"
+  description: "TODO"
+  repo-branch: main
+  repo-url: "https://github.com/$GIT_USER_NAME/microbeseq_nbdev_example"
