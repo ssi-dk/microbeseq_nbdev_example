@@ -16,7 +16,31 @@ pip install microbeseq_nbdev_example
 Fill me in please! Don’t forget code examples:
 
 ``` python
-1+1
+! core_hello_world -h
 ```
 
-    2
+    usage: core_hello_world [-h] [--config_file CONFIG_FILE] name
+
+    This will print Hello World! with your name
+
+    positional arguments:
+      name                       Your name
+
+    options:
+      -h, --help                 show this help message and exit
+      --config_file CONFIG_FILE  config file to set env vars from
+
+``` python
+! hello_two_world -h
+```
+
+    usage: hello_two_world [-h] [--name NAME] [--alternative_name ALTERNATIVE_NAME]
+                           [--config_file CONFIG_FILE]
+
+    This will print Hello World! with your name
+
+    options:
+      -h, --help                           show this help message and exit
+      --name NAME                          A name
+      --alternative_name ALTERNATIVE_NAME  An alternative name
+      --config_file CONFIG_FILE            config file to set env vars from

@@ -52,13 +52,13 @@ def cli(
     """
     config = core.get_config(config_file)  # Set env vars and get config variables
     if name is not None:
-        config["example"]["user_input"]["name"] = name
+        config["example"]["input"]["name"] = name
     if alternative_name is not None:
-        config["example"]["user_input"]["alternative_name"] = alternative_name
+        config["example"]["input"]["alternative_name"] = alternative_name
 
     print(
         hello_two_world(
-            config["example"]["user_input"]["name"],
-            config["example"]["user_input"]["alternative_name"],
+            config["example"]["input"]["name"],
+            config["example"]["input"]["alternative_name"],
         )
     )

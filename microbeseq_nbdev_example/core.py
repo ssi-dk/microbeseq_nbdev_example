@@ -196,16 +196,19 @@ def get_samplesheet(sample_sheet_config: dict) -> pd.DataFrame:
     # Ensure the sample sheet has the correct columns
     if columns is not None and not all([col in df.columns for col in columns]):
         raise ValueError("Error: Sample sheet does not have the correct columns")
+    # also drop columns which are not needed
+    if columns is not None:
+        df = df[columns]
 
     # Clean the df of any extra rows that can be caused by empty lines in the sample sheet
     df = df.dropna(how="all")
     return df
 
-# %% ../nbs/00_core.ipynb 23
+# %% ../nbs/00_core.ipynb 24
 def hello_world(name: str = "Not given") -> str:
     return f"Hello World! My name is {name}"
 
-# %% ../nbs/00_core.ipynb 27
+# %% ../nbs/00_core.ipynb 28
 from fastcore.script import call_parse
 
 
@@ -219,6 +222,6 @@ def cli(
     """
     config = get_config(config_file)  # Set env vars and get config variables
     if name is not None:
-        config["example"]["user_input"]["name"] = name
+        config["example"]["input"]["name"] = name
 
-    print(hello_world(config["example"]["user_input"]["name"]))
+    print(hello_world(config["example"]["input"]["name"]))
