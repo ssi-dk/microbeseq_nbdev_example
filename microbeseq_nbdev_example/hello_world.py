@@ -27,8 +27,6 @@ from fastcore import test
 # Project specific libraries
 
 # %% ../nbs/01_hello_world.ipynb 8
-# !!! UNCOMMENT code below !!!, it also NEEDS to be renamed to match YOUR_REPO_NAME
-
 from microbeseq_nbdev_example import (
     core,
 )

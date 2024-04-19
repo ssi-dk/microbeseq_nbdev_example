@@ -5,11 +5,5 @@
 # name: ${MICROBESEQ_NBDEV_EXAMPLE_NAME}
 example:
     input:
-        sample_sheet:
-            path: "../input/sample_sheet.tsv"
-            columns: 
-                - sample_id
-                - file_path
-                - metadata1
         name: ${MICROBESEQ_NBDEV_EXAMPLE_USER_INPUT_NAME}
         alternative_name: Lee

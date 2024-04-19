@@ -6,14 +6,32 @@ __all__ = ['PACKAGE_NAME', 'DEV_MODE', 'PACKAGE_DIR', 'PROJECT_DIR', 'config', '
 
 # %% ../nbs/00_core.ipynb 4
 # Need the microbeseq_nbdev_example for a few functions, this can be considered a static var
+
+import importlib
+import importlib.util
+import os
+
 PACKAGE_NAME: str = (
     "microbeseq_nbdev_example"  # Make sure to adjust this to your package name
 )
 DEV_MODE: bool = (
     False  # set below to override, as this is in an export block it'll be exported while the dev mode section is not
 )
-PACKAGE_DIR = None  # set in dev mode
-PROJECT_DIR = None  # set in dev mode
+
+PACKAGE_DIR = None
+try:
+    spec = importlib.util.find_spec(PACKAGE_NAME)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    PACKAGE_DIR = os.path.dirname(module.__file__)
+except ImportError:
+    DEV_MODE = True
+except AttributeError:
+    DEV_MODE = True
+PROJECT_DIR = os.getcwd()  # override value in dev mode
+if PROJECT_DIR.endswith("nbs"):
+    DEV_MODE = True
+    PROJECT_DIR = os.path.split(PROJECT_DIR)[0]
 
 # %% ../nbs/00_core.ipynb 10
 # standard libs
@@ -25,6 +43,7 @@ import re
 import dotenv  # for loading config from .env files, https://pypi.org/project/python-dotenv/
 import envyaml  # Allows to loads env vars into a yaml file, https://github.com/thesimj/envyaml
 import fastcore  # To add functionality related to nbdev development, https://github.com/fastai/fastcore/
+import pandas  # For sample sheet manipulation
 from fastcore import (
     test,
 )
@@ -49,33 +68,12 @@ def set_env_variables(config_path: str, overide_env_vars: bool = True) -> bool:
     # Set the env vars first, this is needed for the card.yaml to replace ENV variables
     # NOTE: You need to adjust PROJECT_NAME to your package name for this to work, the exception is only for dev purposes
     # This here checks if your package is installed, such as through pypi or through pip install -e  [.dev] for development. If it is then it'll go there and use the config files there as your default values.
-    spec = importlib.util.find_spec(PACKAGE_NAME)
-    if (
-        DEV_MODE
-    ):  # Means we are in development and can reference the package path directly as it's relative to this code.
-        try:
-            dotenv.load_dotenv(
-                f"{PACKAGE_DIR}/config/config.default.env", override=False
-            )
-        except Exception as e:
-            print(f"Error: {PACKAGE_DIR}/config/config.default.env does not exist")
-            return False
-    elif (
-        spec is not None
-    ):  # Means the package is installed and we should get defaults from the package
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(
-            module
-        )  # load the module which means we know where the package is with module.__path__[0]
-        try:
-            dotenv.load_dotenv(
-                f"{module.__path__[0]}/config/config.default.env", override=False
-            )
-        except Exception as e:
-            print(
-                f"Error: {module.__path__[0]}/config/config.default.env does not exist"
-            )
-            return False
+    try:
+        dotenv.load_dotenv(f"{PACKAGE_DIR}/config/config.default.env", override=False)
+    except Exception as e:
+        print(f"Error: {PACKAGE_DIR}/config/config.default.env does not exist")
+        return False
+
     # 2. set values from file:
     if os.path.isfile(config_path):
         dotenv.load_dotenv(config_path, override=overide_env_vars)
@@ -93,27 +91,13 @@ def get_config(config_path: str = None, overide_env_vars: bool = True) -> dict:
     # First sets environment with variables from config_path, then uses those variables to fill in appropriate values in the config.yaml file, the yaml file is then returned as a dict
     # If you want user env variables to take precedence over the config.yaml file then set overide_env_vars to False
     set_env_variables(config_path, overide_env_vars)
-    if (
-        DEV_MODE
-    ):  # Means we are in development and can reference the package path directly as it's relative to this code.
-        config: dict = envyaml.EnvYAML(
-            os.environ.get(
-                "CORE_YAML_CONFIG_FILE", f"{PACKAGE_DIR}/config/config.default.yaml"
-            ),
-            strict=False,
-        ).export()
-    else:
-        spec = importlib.util.find_spec(PACKAGE_NAME)
-        if spec is not None:
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
-            config: dict = envyaml.EnvYAML(
-                os.environ.get(
-                    "CORE_YAML_CONFIG_FILE",
-                    f"{module.__path__[0]}/config/config.default.yaml",
-                ),
-                strict=False,
-            ).export()
+
+    config: dict = envyaml.EnvYAML(
+        os.environ.get(
+            "CORE_YAML_CONFIG_FILE", f"{PACKAGE_DIR}/config/config.default.yaml"
+        ),
+        strict=False,
+    ).export()
 
     return config
 
@@ -130,7 +114,7 @@ def show_project_env_vars(config: dict) -> None:
         if k.startswith(config["CORE_PROJECT_VARIABLE_PREFIX"]):
             print(f"{k}={v}")
 
-# %% ../nbs/00_core.ipynb 21
+# %% ../nbs/00_core.ipynb 22
 import pandas as pd
 
 
